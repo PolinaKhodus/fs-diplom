@@ -2,78 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Seat;
-use App\Http\Requests\StoreSeatRequest;
-use App\Http\Requests\UpdateSeatRequest;
+use App\Interfaces\SeatRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
 class SeatController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return Response
-     */
-    public function index()
-    {
-        //
-    }
+    private SeatRepositoryInterface $seatRepository;
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
-    public function create()
+    public function __construct(SeatRepositoryInterface $seatRepository)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StoreSeatRequest  $request
-     * @return Response
-     */
-    public function store(StoreSeatRequest $request)
-    {
-        //
+        $this->seatRepository = $seatRepository;
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return Response
      */
-    public function show($id)
+    public function show(int $id): Response
     {
-        return Seat::find($id)->first();
-
+        return $this->seatRepository->findById($id);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $hall_id
-     * @param  int  $number
-     * @return Response
+     * @param int $hall_id
+     * @return Collection
      */
-    public function showSeatsInHall($hall_id)
+    public function showSeatsInHall(int $hall_id): Collection
     {
-        return Seat::where('hall_id', $hall_id)->get();
+        return $this->seatRepository->seatsInHall($hall_id);
 
     }
 
     /**
      * Set VIP flag to Seat ID.
      *
-     * @param  int  $seat_id
-     * @return Response
+     * @param int $seat_id
+     * @return mixed
      */
-    public function toggleSeat($seat_id)
+    public function toggleSeat(int $seat_id): mixed
     {
-        $seat = Seat::find($seat_id);
+        $seat = $this->seatRepository->findById($seat_id);
 
         if($seat->vip && !$seat->sold) {
             $seat->update(['sold' => true, 'vip' => false]);
@@ -83,41 +56,8 @@ class SeatController extends Controller
             $seat->update(['vip' => false, 'sold' => false]);
         }
 
-        return Seat::find($seat_id);
+        return $this->seatRepository->findById($seat_id);
 
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Seat  $seat
-     * @return Response
-     */
-    public function edit(Seat $seat)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdateSeatRequest  $request
-     * @param  \App\Models\Seat  $seat
-     * @return Response
-     */
-    public function update(UpdateSeatRequest $request, Seat $seat)
-    {
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Seat  $seat
-     * @return Response
-     */
-    public function destroy(Seat $seat)
-    {
-        //
-    }
 }

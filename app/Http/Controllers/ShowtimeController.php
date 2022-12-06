@@ -2,29 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Hall;
-use App\Models\Movie;
+use App\Interfaces\HallRepositoryInterface;
+use App\Interfaces\MovieRepositoryInterface;
+use App\Interfaces\ShowtimeRepositoryInterface;
 use App\Models\Showtime;
 use App\Http\Requests\StoreShowtimeRequest;
-use App\Http\Requests\UpdateShowtimeRequest;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
+use Inertia\Response;
 
 class ShowtimeController extends Controller
 {
+    private ShowtimeRepositoryInterface $showtimeRepository;
+    private HallRepositoryInterface $hallRepository;
+    private MovieRepositoryInterface $movieRepository;
+
+    public function __construct(ShowtimeRepositoryInterface $showtimeRepository,
+                                HallRepositoryInterface $hallRepository,
+                                MovieRepositoryInterface $movieRepository)
+    {
+        $this->showtimeRepository = $showtimeRepository;
+        $this->hallRepository = $hallRepository;
+        $this->movieRepository = $movieRepository;
+    }
     /**
      * Display a listing of the resource.
      *
      * @return Response
      */
-    public function index()
+    public function index(): Response
     {
 
-        $showtimes = Showtime::all();
-        $halls = Hall::all();
-        $movies = Movie::all();
+        $showtimes = $this->showtimeRepository->all();
+        $halls = $this->hallRepository->all();
+        $movies = $this->movieRepository->all();
 
         return Inertia::render('Welcome', [
             'extraClass' => 'client',
@@ -35,32 +48,25 @@ class ShowtimeController extends Controller
             'movies' => $movies,
         ]);
     }
-    /**
-     * Display a listing of the resource.
-     *
-     */
-    public function showtimes()
-    {
-        return Showtime::all();
-    }
 
     /**
-     * Show the form for creating a new resource.
+     * List all Showtime models
      *
-     * @return Response
+     * @return Collection
      */
-    public function create()
+
+    public function showtimes(): Collection
     {
-        //
+        return $this->showtimeRepository->all();
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreShowtimeRequest  $request
+     * @param StoreShowtimeRequest $request
      * @return StoreShowtimeRequest
      */
-    public function store(StoreShowtimeRequest $request)
+    public function store(StoreShowtimeRequest $request): StoreShowtimeRequest
     {
         $showtime = new Showtime($request->validated());
         $showtime->save();
@@ -71,12 +77,12 @@ class ShowtimeController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  integer $id
-     * @return \Inertia\Response
+     * @param integer $id
+     * @return Response
      */
-    public function show(int $id)
+    public function show(int $id): Response
     {
-        $showtime = Showtime::find($id);
+        $showtime = $this->showtimeRepository->findById($id);
         $hall = $showtime->hall()->first();
         $seats = $hall->seats;
         $movie = $showtime->movie()->first();
@@ -92,7 +98,8 @@ class ShowtimeController extends Controller
         ]);
     }
 
-    public function payment(Request $request) {
+    public function payment(Request $request): Response
+    {
         return Inertia::render('ShowtimePayment', [
             'extraClass' => 'client',
             'canLogin' => Route::has('login'),
@@ -101,37 +108,4 @@ class ShowtimeController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Showtime  $showtime
-     * @return Response
-     */
-    public function edit(Showtime $showtime)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdateShowtimeRequest  $request
-     * @param  \App\Models\Showtime  $showtime
-     * @return Response
-     */
-    public function update(UpdateShowtimeRequest $request, Showtime $showtime)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Showtime  $showtime
-     * @return Response
-     */
-    public function destroy(Showtime $showtime)
-    {
-        //
-    }
 }

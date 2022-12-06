@@ -2,24 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\HallRepositoryInterface;
 use App\Http\Requests\StoreHallRequest;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use App\Models\Hall;
 use App\Models\Seat;
-use App\Http\Requests\UpdateHallRequest;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class HallController extends Controller
 {
+    private HallRepositoryInterface $hallRepository;
+
+    public function __construct(HallRepositoryInterface $hallRepository)
+    {
+        $this->hallRepository = $hallRepository;
+    }
     /**
      * Display a listing of the resource.
      *
-     * @return \Inertia\Response
+     * @return Response
      */
-    public function index()
+    public function index(): Response
     {
-        $halls = DB::table('halls')->paginate(10);
+        $halls = $this->hallRepository->allPaginated();
 
         return Inertia::render('Manager', [
             'extraClass' => 'admin',
@@ -28,22 +35,12 @@ class HallController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreHallRequest  $request
-     * @return \Inertia\Response
+     * @param StoreHallRequest $request
+     * @return RedirectResponse
      */
-    public function store(StoreHallRequest $request)
+    public function store(StoreHallRequest $request): RedirectResponse
     {
 
         $hall = new Hall($request->validated());
@@ -65,50 +62,37 @@ class HallController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param int $id
+     * @return mixed
      */
-    public function show($id)
+    public function show(int $id)
     {
-        return Hall::find($id);
+        return $this->hallRepository->findById($id);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Hall  $hall
-     * @return \Illuminate\Http\Response
+     * @param int $id
+     * @return RedirectResponse
      */
-    public function edit(Hall $hall)
+    public function destroy(int $id): RedirectResponse
     {
-        //
+        $this->hallRepository->destroy($id);
+        return redirect()->route('manager');
     }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdateHallRequest  $request
-     * @param  int $hall
-     * @return \Illuminate\Http\Response
-     */
-    public function update(UpdateHallRequest $request, int $hall)
-    {
-
-    }
-
     /**
      * Update the specified resource in storage.
      *
-     * @param  int $id
-     * @param  int $rows
-     * @param  int $seats
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Response|Request
      */
-    public function updateHallRows(Request $request, $id): \Illuminate\Http\Response|Request
+    public function updateHallRows(Request $request, int $id): Response|Request
     {
-        $hall = Hall::find($id);
+        $hall = $this->hallRepository->findById($id);
 
-        if($request->rows || $request->seats_in_row) {
+        if ($request->rows || $request->seats_in_row) {
             $hall->seats()->delete();
         }
 
@@ -130,14 +114,14 @@ class HallController extends Controller
     /**
      * Update Hall prices
      *
+     * @param Request $request
      * @param int $id
-     * @param  int $vipPrice
-     * @param  int $price
-     * @return \Illuminate\Http\Response
+     * @return Response|Request
      */
-    public function updateHallPrice(Request $request, int $id): \Illuminate\Http\Response|Request
+
+    public function updateHallPrice(Request $request, int $id): Response|Request
     {
-        $hall = Hall::find($id);
+        $hall = $this->hallRepository->findById($id);
 
         $hall->update(['vip_price' => $request->vipPrice, 'common_price' => $request->price]);
         $hall->save();
@@ -147,27 +131,17 @@ class HallController extends Controller
     /**
      * Set Active Hall
      *
+     * @param Request $request
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return Response|Request
      */
-    public function setActive(Request $request, int $id): \Illuminate\Http\Response|Request
+
+    public function setActive(Request $request, int $id): Response|Request
     {
-        $hall = Hall::find($id);
+        $hall = $this->hallRepository->findById($id);
 
         $hall->update(['open_sale' => true]);
         $hall->save();
         return $request;
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        Hall::destroy($id);
-        return redirect()->route('manager');
     }
 }
