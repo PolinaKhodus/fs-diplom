@@ -1,5 +1,5 @@
 
-# FS-36 Netology Diploma
+# FFS-36 Netology Diploma
 by Polina Khodus
 
 
